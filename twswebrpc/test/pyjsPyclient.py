@@ -6,7 +6,10 @@ from twisted.internet import reactor
 
 
 def tryStop():
+    global rpcClients
+
     finished = True
+
     for rpcclient in rpcClients:
         if rpcclient.callsCounter > 0:
             finished = False
