@@ -190,7 +190,7 @@ class JellyClient(JSONClient):
 
 if __name__ == '__main__':
 
-    clients = []
+    clients = list()
     clients.append(JSONClient('http://127.0.0.1:1080/test'))
     #clients.append(JellyClient('http://127.0.0.1:1080/jellytest'))
 
