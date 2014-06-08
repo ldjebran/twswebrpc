@@ -15,7 +15,7 @@ def consoleRootName(name):
 def tryStopReactor(result, rpc_client):
     """
     Try to stop the reactor cleanly stopping all the rpc_client cached connections
-    :param result is here for deferred that will supply it
+    :param result is here for deferred that will supply it, not used here
     :param rpc_client: the rpc client used
     :return: return deferred or None
     """
@@ -63,7 +63,7 @@ def callRemote(rpc_client, method_name, *params, **kwargs):
     else:
         deferred.addErrback(onResponseError)
 
-    # chain try stop reactor, so we can free the response function to call it
+    # chain try stop reactor, so we can free the response functions to call it
     stopDeferred = Deferred()
     stopDeferred.addBoth(tryStopReactor, rpc_client)
 
