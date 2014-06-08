@@ -1,3 +1,8 @@
+
+# this is a modified version JSONRPCExample found in https://github.com/pyjs/pyjs/tree/master/examples/jsonrpc
+# for licence and copyright of this file please look at http://pyjs.org and https://github.com/pyjs/pyjs
+
+
 import pyjd # dummy in pyjs
 
 from pyjamas.ui.RootPanel import RootPanel
