@@ -111,7 +111,7 @@ class JSONClient(object):
         self.url = url
         self.encoder = self.get_encoder()
         if not IEncoder.providedBy(self.encoder):
-            raise Exception('no encoder available')
+            raise Exception('no encoder available or encoder does not provide IEncoder')
 
         self.callID = callID
         self.callsCounter = 0

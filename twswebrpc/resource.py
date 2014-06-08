@@ -4,7 +4,7 @@ from twisted.web import server
 from twisted.internet import defer
 from twisted.web.server import GzipEncoderFactory
 
-from encoder import JSONEncoder, JellyEncoder
+from encoder import IEncoder, JSONEncoder, JellyEncoder
 
 
 """
@@ -24,10 +24,9 @@ jsonServerResource.add_method('echo', serve_echo)
 
 serverSite = server.Site(jsonServerResource)
 
-# listen to available ips at port 1080, to reach this server open url http://1270.0.0.1:1080
+# listen to available ips at port 1080
 reactor.listenTCP(1080, serverSite)
 reactor.run()
-
 """
 
 
@@ -51,8 +50,8 @@ class JSONResource(Resource):
         self._gzipEncoderFactory = None
 
         self.encoder = self.get_encoder()
-        if not self.encoder:
-            raise Exception('undefined encoder')
+        if not IEncoder.providedBy(self.encoder):
+            raise Exception('no encoder available or encoder does not provide IEncoder')
 
     def getCompressLevel(self):
         return self._gzipEncoderFactory.compressLevel
