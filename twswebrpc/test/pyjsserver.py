@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python2.7
 
 from twisted.internet import reactor
 from twisted.web import static, server
@@ -25,7 +25,7 @@ class JSONHandler(JSONResource):
 
     def echo_client_info(self, request, msg):
         """
-        :param request: the client do supply the request but msg string param only
+        :param request: the client do supply the request but msg param only
         :param msg: any string variable
         :return:
         """
@@ -47,9 +47,7 @@ httpRootPath.putChild("test", jsonHandler)
 
 serverSite = server.Site(httpRootPath)
 
-# listen to available ips at port 1080, to reach this server open url http://1270.0.0.1:1080
+# listen to available ips at port 1080
 reactor.listenTCP(1080, serverSite)
+print 'open the link in the browser: http://127.0.0.1:1080 , or launch pyjsPyclient.py for test '
 reactor.run()
-
-
-
