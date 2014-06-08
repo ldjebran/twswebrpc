@@ -174,9 +174,17 @@ class JSONClient(object):
         self.callsCounter -= 1
         return response
 
-    def closeConnections(self):
+    def closeCachedConnections(self, callBack=None):
         if self.pool:
-            self.pool.closeCachedConnections()
+            deferred = self.pool.closeCachedConnections()
+            if callBack:
+                assert callable(callBack)
+                return deferred.addCallback(callBack)
+
+            else:
+                return deferred
+
+        return None
 
 
 class JellyClient(JSONClient):
@@ -189,14 +197,13 @@ class JellyClient(JSONClient):
         return JellyEncoder()
 
 if __name__ == '__main__':
-
-    clients = list()
-    clients.append(JSONClient('http://127.0.0.1:1080/test'))
+    rpcClients = list()
+    rpcClients.append(JSONClient('http://127.0.0.1:1080/test'))
     #clients.append(JellyClient('http://127.0.0.1:1080/jellytest'))
 
     def tryStop():
         finished = True
-        for client in clients:
+        for client in rpcClients:
             if client.callsCounter > 0:
                 finished = False
         if finished:
@@ -205,30 +212,30 @@ if __name__ == '__main__':
     import time
     a = time.time()
 
-    def startClient(client):
+    def start_rpc_client(rpc_client):
         iteration = 5
 
         def success(response):
-            print '>>>>>>>>>>>>> %s:' % client.protocolName, response
-            print '>>>>>>>>>>>>> call time:', time.time() - a, 'calls counter: %s (reaming calls)' % client.callsCounter
-            if client.callsCounter == 0:
-                print '>>>>>>>>>>>>> %s: - finish' % client.protocolName
+            print '>>>>>>>>>>>>> %s:' % rpc_client.protocolName, response
+            print '>>>>>>>>>>>>> call time:', time.time() - a, 'calls counter: %s (reaming calls)' % rpc_client.callsCounter
+            if rpc_client.callsCounter == 0:
+                print '>>>>>>>>>>>>> %s: - finish' % rpc_client.protocolName
 
             tryStop()
 
         def error(response):
-            print 'error %s>>>>' % client.protocolName, response
+            print 'error %s>>>>' % rpc_client.protocolName, response
             print 'error >>>> time:', time.time() - a
-            if client.callsCounter == 0:
-                print '>>>>>>>>>>>>> %s: - finish' % client.protocolName
+            if rpc_client.callsCounter == 0:
+                print '>>>>>>>>>>>>> %s: - finish' % rpc_client.protocolName
             tryStop()
 
         for ind in range(iteration):
-            d = client.callRemote('echo', 'test from lib: %s ind: %s' % (client.protocolName, ind))
+            d = rpc_client.callRemote('echo', 'test from lib: %s ind: %s' % (rpc_client.protocolName, ind))
             d.addCallback(success)
             d.addErrback(error)
 
-    for client in clients:
-        startClient(client)
+    for rpcClient in rpcClients:
+        start_rpc_client(rpcClient)
 
     reactor.run()

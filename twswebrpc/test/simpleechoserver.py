@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python2.7
 
 # a very simple json echo server
 
@@ -22,6 +22,7 @@ jsonServerResource.add_method('add', serve_add)
 
 serverSite = server.Site(jsonServerResource)
 
-# listen to available ips at port 1080, to reach this server open url http://1270.0.0.1:1080
+# listen to available ips at port 1080
 reactor.listenTCP(1080, serverSite)
+print 'launch simpleechoclient.py or simpleechoclient_tester.py for test '
 reactor.run()

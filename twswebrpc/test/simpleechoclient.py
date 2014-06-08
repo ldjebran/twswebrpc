@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python2.7
 
 from twswebrpc import JSONClient
 from twisted.internet import reactor
@@ -37,10 +37,3 @@ deferred.addCallback(onResponseSuccess)
 deferred.addErrback(onResponseError)
 
 reactor.run()
-
-
-
-
-
-
-

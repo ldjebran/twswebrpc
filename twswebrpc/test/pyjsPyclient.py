@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 
 import time
 
@@ -43,7 +44,7 @@ def startClient(rpcClient):
 
     for method in methods:
         #toSend = 'test from:%s method:%s' % (client.protocolName, method)
-        toSend = 'Hellow world'
+        toSend = 'Hello world'
         d = rpcClient.callRemote(method, toSend)
         d.addCallback(success)
         d.addErrback(error)
