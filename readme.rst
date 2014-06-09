@@ -2,7 +2,7 @@
 Teamworks web rpc
 =================
 
-twswebrpc is a very simple web rpc client, but very stable
+twswebrpc is a very simple web rpc client and web resource for twisted
 
 Install
 +++++++
@@ -15,7 +15,7 @@ Install
 Play
 ++++
 
-Create a simple echo web server:
+Create a simple echo rpc web server:
 
 .. code-block:: python
 
