@@ -57,7 +57,7 @@ def onResponseSuccess(response):
 
 
 def onResponseError(response):
-    print '%s' % consoleRootName('server'), response
+    print '%s' % consoleRootName('server error'), response
 
 
 def callRemote(rpc_client, method_name, *params, **kwargs):
@@ -94,14 +94,23 @@ simpleClient = JSONClient('http://127.0.0.1:1080')
 # call echo
 callRemote(simpleClient, 'echo', 'hollow world')
 
-# call add
-callRemote(simpleClient, 'add', 4, 3)
+
+# call add and pass other callBacks functions
+def addOnSuccess(response):
+    print '%s' % consoleRootName('server add'), response
+
+
+def addOnError(response):
+    print '%s' % consoleRootName('server add error'), response
+
+callRemote(simpleClient, 'add', 4, 3, onSuccess=addOnSuccess, onError=addOnError)
 
 # passing a method that do not exist on server
 callRemote(simpleClient, 'nonexistant')
 
-# passing a method with wrong arguments
-callRemote(simpleClient, 'add', 4, 'i am a wrong argument')
+# passing a method with wrong arguments and pass only addOnError callBack
+#  (for success the default one will be used)
+callRemote(simpleClient, 'add', 4, 'i am a wrong argument', onError=addOnError)
 
 # passing a method with less arguments
 callRemote(simpleClient, 'add', 4)

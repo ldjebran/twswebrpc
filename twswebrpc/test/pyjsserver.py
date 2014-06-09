@@ -50,7 +50,7 @@ def lowercase(msg):
     return msg.lower()
 
 # add the http root to serve static html files
-httpRootPath = static.File("pyjs/output")
+httpRootPath = static.File("thirdparty/pyjs/output")
 
 jsonHandler = JSONHandler()
 #function added out side class definition

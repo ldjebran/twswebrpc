@@ -1,5 +1,5 @@
 
-Teamworks web rpc
+TeamWorks web rpc
 =================
 
 twswebrpc is a very simple web rpc client and web resource for twisted
@@ -123,20 +123,3 @@ Play with other samples:
 play with the simple echo and add server simpleechoserver.py
 
 and execute and review code in: simpleechoclient.py and simpleechoclient_tester.py
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
