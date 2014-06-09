@@ -52,7 +52,7 @@ create a simple json rpc web client:
 
     def onResponseError(response):
         print 'error response> %s' % response
-        tryStopReactor()
+        reactor.stop()
 
 
     simpleClient = JSONClient('http://127.0.0.1:1080')
