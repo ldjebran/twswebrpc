@@ -13,7 +13,7 @@ Install
 
 or
 
- .. code-block:: sh
+.. code-block:: sh
 
     $ pip install twswebrpc
 
