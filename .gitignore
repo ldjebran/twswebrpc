@@ -1,5 +1,7 @@
-build/
+build
+dist
+twswebrpc.egg-info
 *.wpr
 *.pyc
 *.pyo
-.idea/
+.idea
