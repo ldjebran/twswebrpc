@@ -11,6 +11,11 @@ Install
 
     $ easy_install twswebrpc
 
+or
+
+ .. code-block:: sh
+
+    $ pip install twswebrpc
 
 Play
 ++++
