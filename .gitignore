@@ -5,3 +5,4 @@ twswebrpc.egg-info
 *.pyc
 *.pyo
 .idea
+setup_bdist_egg_upload.sh
