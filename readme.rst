@@ -109,8 +109,8 @@ or execute the test python file pyjsPyclient.py
                  [call time:0.0129890441895 reaming calls: 2]
     >>>>>>>>>>>>> jsonrpc: Hello world (request from: ip:127.0.0.1 port:56994)
                  [call time:0.013927936554 reaming calls: 1]
-    ERROR >>>>>>> jsonrpc: [Failure instance: Traceback (failure with no frames): <class 'twswebrpc.client.ServerError'>: se
-    rver Error: server error - JSONRPCError - method "nonexistant_method" does not exist.
+    ERROR >>>>>>>  [Failure instance: Traceback (failure with no frames): <class 'twswebrpc.client.ServerError'>: server
+    Error: -32601 :  method "nonexistant_method" does not exist
     ]
                  [call time:0.0149619579315 reaming calls: 0]
     >>>>>>>>>>>>> jsonrpc: - finish
