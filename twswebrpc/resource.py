@@ -43,10 +43,28 @@ reactor.run()
 """
 
 
+# Parse error, Invalid JSON was received by the server. An error occurred on
+# the server while parsing the JSON text.
+ERROR_CODE_INVALID_JSON_PARSE_TEXT = -32700
+
+# Invalid Request The JSON sent is not a valid Request object.
+ERROR_CODE_INVALID_JSON_REQUEST_OBJECT = -32600
+
+# Method not found The method does not exist / is not available.
+ERROR_CODE_METHOD_NOT_FOUND = -32601
+
+# Invalid params Invalid method parameter(s).
+ERROR_CODE_INVALID_PARAMETERS = -32602
+
+# Internal error Internal JSON-RPC error.
+ERROR_CODE_SERVER_ERROR = -32603
+#  -32000 to -32099 Server error Reserved for implementation-defined server-errors.
+
+
 class JSONResource(Resource):
 
     protocolName = 'jsonrpc'
-    protocolVersion = '1.1'
+    protocolVersion = '2.0'
     protocolContentType = 'text/json'
     protocolErrorName = 'JSONRPCError'
 
@@ -63,8 +81,8 @@ class JSONResource(Resource):
         self._gzipEncoderFactory = None
 
         self.encoder = self.get_encoder()
-        if not IEncoder.providedBy(self.encoder):
-            raise Exception('no encoder available or encoder does not provide IEncoder')
+
+        assert IEncoder.providedBy(self.encoder), 'encoder does not provide IEncoder (no encoder available)'
 
     def getCompressLevel(self):
         return self._gzipEncoderFactory.compressLevel
@@ -148,17 +166,29 @@ class JSONResource(Resource):
             self.logger('call cancelled: %s:%s > %s ' %
                         (request.client.host, request.client.port, err.getErrorMessage()))
 
-    def response(self, callID, result):
-        return self.encoder.encode(dict(version=self.protocolVersion, id=callID, result=result, error=None))
+    def response(self, callID, result, error=None, version=None):
+        if version is None:
+            version = self.protocolVersion
 
-    def error(self, callID, code, message):
-        return self.encoder.encode(dict(id=callID,
-                                        version=self.protocolVersion,
-                                        error=dict(name=self.protocolErrorName,
-                                                   code=code,
-                                                   message=message),
-                                        result=None)
-                                   )
+        if version == '2.0':
+            message = dict(id=callID, result=result)
+            message[self.protocolName] = version
+            if error:
+                message['error'] = error
+        else:
+            message = dict(version=self.protocolVersion, id=callID, result=result, error=error)
+
+        return self.encoder.encode(message)
+
+    def error(self, callID, code, message, data=None, version=None):
+        if version is None:
+            version = self.protocolVersion
+        error_message = dict(code=code,
+                             message=message,
+                             data=data
+                             )
+
+        return self.response(callID, None, error=error_message, version=version)
 
     def render(self, request):
         request.content.seek(0, 0)
@@ -173,35 +203,48 @@ class JSONResource(Resource):
         return server.NOT_DONE_YET
 
     def process(self, data, request):
+        try:
+            decodedData = self.encoder.decode(data)
 
-        decodedData = self.encoder.decode(data)
+        except Exception as exception:
+            return self.error(0, ERROR_CODE_INVALID_JSON_PARSE_TEXT, 'invalid protocol %s:, %s' %
+                              (self.protocolContentType, str(exception))
+                              )
 
         if not isinstance(decodedData, dict):
-            return self.error(0, 100, 'inappropriate protocol')
+            return self.error(0, ERROR_CODE_INVALID_JSON_PARSE_TEXT, "invalid protocol waiting "
+                                                                     "<type 'dict'> received %s" % type(decodedData))
+
+        # define the version
+        if self.protocolName in decodedData:
+            version = decodedData[self.protocolName]
+        else:
+            version = '1.0'
 
         callID = decodedData.get('id', 0)
         methodName = decodedData.get('method', None)
         params = decodedData.get('params', [])
 
         if not isinstance(params, (list, tuple)):
-            return self.error(callID, 100, 'protocol params must be list or tuple')
+            return self.error(callID, ERROR_CODE_INVALID_PARAMETERS, 'protocol params must be list or tuple')
 
         method = self.get_method(methodName)
 
-        if method:
-            if methodName in self._methods_with_requests:
-                d = defer.maybeDeferred(method, request, *params)
-            else:
-                d = defer.maybeDeferred(method, *params)
+        if not method:
+            return self.error(callID, ERROR_CODE_METHOD_NOT_FOUND, 'method "%s" does not exist' % methodName)
 
-            d.addCallback(self._execMethodSuccess, callID)
-            d.addErrback(self._execMethodError, callID)
-            return d
+        if methodName in self._methods_with_requests:
+            d = defer.maybeDeferred(method, request, *params)
         else:
-            return self.error(callID, 100, 'method "%s" does not exist' % methodName)
+            d = defer.maybeDeferred(method, *params)
+
+        d.addCallback(self._execMethodSuccess, callID, version)
+        d.addErrback(self._execMethodError, callID, version)
+        return d
 
     def processSuccess(self, result, request):
         if not request._disconnected:
+            request.setResponseCode(200)
             request.setHeader("content-type", self.protocolContentType)
             if self._gzipEncoderFactory:
                 gzipEncoder = self._gzipEncoderFactory.encoderForRequest(request)
@@ -220,29 +263,29 @@ class JSONResource(Resource):
 
     def processError(self, failure, request):
         """
-        this can be due only if the protocol sent here is not json
-        for example when a user access here by browser
-        try to respond in json format only
-        except when it is disconnected
+        in normal situations this errBack will never happen,
+        in this situation i do know where the problem occurred
         """
         if not request._disconnected:
-            result = self.error(None, 100, failure.getErrorMessage())
+            # try to be json even here
+            result = self.error(None, ERROR_CODE_SERVER_ERROR, failure.getErrorMessage())
+            request.setResponseCode(500)
             request.setHeader("content-type", self.protocolContentType)
             request.setHeader("content-length", str(len(result)))
             request.write(result)
             request.finish()
 
-    def _execMethodSuccess(self, result, callID):
-        return self.response(callID, result)
+    def _execMethodSuccess(self, result, callID, version):
+        return self.response(callID, result, version=version)
 
-    def _execMethodError(self, failure, callID):
-        return self.error(callID, 100, failure.getErrorMessage())
+    def _execMethodError(self, failure, callID, version):
+        return self.error(callID, ERROR_CODE_SERVER_ERROR, failure.getErrorMessage(), version=version)
 
 
 class JellyResource(JSONResource):
 
     protocolName = 'jellyrpc'
-    protocolVersion = '1.1'
+    protocolVersion = '2.0'
     protocolContentType = 'text/jelly'
     protocolErrorName = 'JELLYRPCError'
 

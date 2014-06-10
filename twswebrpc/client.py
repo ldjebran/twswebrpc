@@ -73,15 +73,18 @@ class DataReceiver(Protocol):
             try:
                 response = self.encoder.decode(self.dataBytes)
 
-            except (ValueError, IndexError):
-                self.finished.errback(Failure(UnknownProtocol('error when decoding the server response')))
+            except Exception as exception:
+                self.finished.errback(Failure(UnknownProtocol('error when decoding the server response: %s' %
+                                                              str(exception))))
 
             else:
-                if isinstance(response, dict) and 'error' in response and 'result' in response:
-                    errorData = response.get('error')
+                if isinstance(response, dict) and 'id' in response and 'result' in response:
+                    errorData = response.get('error', None)
                     if errorData:
-                        if isinstance(errorData, dict) and 'message' in errorData:
-                            errorMessage = 'server error - %s - %s' % (errorData.get('name', ''), errorData['message'])
+                        if isinstance(errorData, dict):
+                            errorMessage = '%s :  %s' % (errorData.get('code', None),
+                                                         errorData.get('message', None),
+                                                         )
                             self.finished.errback(Failure(ServerError(errorMessage)))
                         else:
                             self.finished.errback(Failure(
@@ -123,11 +126,12 @@ class JSONClient(object):
 
         self.url = url
         self.encoder = self.get_encoder()
-        if not IEncoder.providedBy(self.encoder):
-            raise Exception('no encoder available or encoder does not provide IEncoder')
 
-        self.callID = callID
-        self.callsCounter = 0
+        assert IEncoder.providedBy(self.encoder), 'no encoder available or encoder does not provide IEncoder'
+        assert isinstance(callID, (int, long)), "callID must be <type 'int'> or <type 'long'>"
+
+        self.__callID = callID
+        self.__callsCounter = 0
         if maxPersistentPerHost > 0:
             self.pool = HTTPConnectionPool(reactor, persistent=True)
             self.pool.maxPersistentPerHost = maxPersistentPerHost
@@ -143,9 +147,24 @@ class JSONClient(object):
     def get_encoder(self):
         return JSONEncoder()
 
+    @property
+    def callID(self):
+        return self.__callID
+
+    def __callsCounterInc(self):
+        self.__callsCounter += 1
+
+    def __callsCounterDec(self):
+        self.__callsCounter -= 1
+
+    @property
+    def callsCounter(self):
+        return self.__callsCounter
+
     def callRemote(self, function, *params):
 
-        data = dict(id='ID%s' % self.callID,
+        self.__callID += 1
+        data = dict(id=self.__callID,
                     method=function,
                     params=params)
 
@@ -165,8 +184,8 @@ class JSONClient(object):
 
         deferred.addCallback(self._onCallSuccess)
         deferred.addErrback(self._onCallError)
-        self.callID += 1
-        self.callsCounter += 1
+
+        self.__callsCounterInc()
 
         return deferred
 
@@ -180,11 +199,11 @@ class JSONClient(object):
         return finished
 
     def _onCallSuccessFinish(self, response):
-        self.callsCounter -= 1
+        self.__callsCounterDec()
         return response
 
     def _onCallError(self, response):
-        self.callsCounter -= 1
+        self.__callsCounterDec()
         return response
 
     def closeCachedConnections(self, callBack=None):
