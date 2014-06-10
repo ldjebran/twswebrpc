@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 #replace pyjsbuild path to match your pyjs instalation
 pyjsbuilder="/home/dl/projects/py/twsengine/bin/pyjs/bin/pyjsbuild"
 
