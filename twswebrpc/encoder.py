@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Encoders encode python data to string
+and strings to python data
+"""
+
 import json
 
 from zope.interface import Interface
@@ -23,6 +28,9 @@ from twisted.spread.banana import decode as bananaDecode
 
 
 class IEncoder(Interface):
+    """
+    json encoder/decoder
+    """
 
     def encode(self, data):
         """
@@ -52,6 +60,8 @@ class JSONEncoder(object):
 
 @implementer(IEncoder)
 class JellyEncoder(object):
+    """this i an experimental version, using twisted matrix jelly and banana to serialize data.
+    """
 
     def encode(self, data):
         security = SecurityOptions()
