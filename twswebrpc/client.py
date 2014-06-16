@@ -110,6 +110,9 @@ class StringProducer(object):
         consumer.write(self.body)
         return succeed(None)
 
+    def pauseProducing(self):
+        pass
+
     def stopProducing(self):
         pass
 
@@ -122,10 +125,12 @@ class JSONClient(object):
 
     userAgentName = 'twswebrpc'
 
-    def __init__(self, url, callID=0, maxPersistentPerHost=2, useCompression=False):
+    def __init__(self, url, callID=0, maxPersistentPerHost=2, useCompression=False, connectTimeout=None):
 
         self.url = url
+        self.connectTimeout = connectTimeout
         self.encoder = self.get_encoder()
+
 
         assert IEncoder.providedBy(self.encoder), 'no encoder available or encoder does not provide IEncoder'
         assert isinstance(callID, (int, long)), "callID must be <type 'int'> or <type 'long'>"
@@ -138,7 +143,7 @@ class JSONClient(object):
         else:
             self.pool = None
 
-        agent = Agent(reactor, pool=self.pool)
+        agent = Agent(reactor, connectTimeout=self.connectTimeout, pool=self.pool)
         if useCompression:
             self.agent = ContentDecoderAgent(agent, [('gzip', GzipDecoder)])
         else:
