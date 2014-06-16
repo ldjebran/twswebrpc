@@ -131,7 +131,6 @@ class JSONClient(object):
         self.connectTimeout = connectTimeout
         self.encoder = self.get_encoder()
 
-
         assert IEncoder.providedBy(self.encoder), 'no encoder available or encoder does not provide IEncoder'
         assert isinstance(callID, (int, long)), "callID must be <type 'int'> or <type 'long'>"
 
